@@ -13,16 +13,22 @@ const ResultContainer = styled.div`
   margin: 2rem auto;
   
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    padding: ${({ theme }) => theme.spacing[5]};
+    padding: ${({ theme }) => theme.spacing[4]};
+    margin: 1rem auto;
+    border-radius: ${({ theme }) => theme.borderRadius.md};
   }
 `;
 
 const ResultHeader = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: ${({ theme }) => theme.spacing[8]};
-  text-align: center;
+  text-align: left;
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    margin-bottom: ${({ theme }) => theme.spacing[4]};
+  }
 `;
 
 const ResultTitle = styled.h2`
@@ -36,12 +42,16 @@ const ResultTitle = styled.h2`
     content: '';
     position: absolute;
     bottom: -10px;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 0;
     width: 60px;
     height: 3px;
     background-color: ${({ theme }) => theme.colors.primary};
     border-radius: ${({ theme }) => theme.borderRadius.full};
+  }
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    font-size: ${({ theme }) => theme.fontSizes.xl};
+    margin-bottom: ${({ theme }) => theme.spacing[3]};
   }
 `;
 
@@ -49,6 +59,12 @@ const ResultSubtitle = styled.p`
   color: ${({ theme }) => theme.colors.gray[600]};
   font-size: ${({ theme }) => theme.fontSizes.lg};
   max-width: 90%;
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    font-size: ${({ theme }) => theme.fontSizes.md};
+    max-width: 100%;
+    line-height: ${({ theme }) => theme.lineHeights.normal};
+  }
 `;
 
 const StatsContainer = styled.div`
@@ -193,6 +209,14 @@ const SitemapContent = styled.pre`
   &::-webkit-scrollbar-thumb:hover {
     background: ${({ theme }) => theme.colors.gray[500]};
   }
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    padding: ${({ theme }) => theme.spacing[3]};
+    font-size: ${({ theme }) => theme.fontSizes.xs};
+    max-height: 300px;
+    min-height: 150px;
+    margin-bottom: ${({ theme }) => theme.spacing[4]};
+  }
 `;
 
 const ButtonGroup = styled.div`
@@ -202,7 +226,7 @@ const ButtonGroup = styled.div`
   
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
     flex-direction: column;
-    align-items: center;
+    gap: ${({ theme }) => theme.spacing[3]};
   }
 `;
 
@@ -252,6 +276,8 @@ const MetricsGrid = styled.div`
   
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
     grid-template-columns: 1fr;
+    gap: ${({ theme }) => theme.spacing[3]};
+    margin-bottom: ${({ theme }) => theme.spacing[4]};
   }
 `;
 
@@ -268,6 +294,10 @@ const MetricCard = styled.div`
     transform: translateY(-2px);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
     background-color: ${({ theme }) => theme.colors.gray[100]};
+  }
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    padding: ${({ theme }) => theme.spacing[3]};
   }
 `;
 
@@ -288,6 +318,10 @@ const MetricValue = styled.div`
   font-size: ${({ theme }) => theme.fontSizes.xl};
   font-weight: ${({ theme }) => theme.fontWeights.bold};
   color: ${({ theme }) => theme.colors.gray[900]};
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    font-size: ${({ theme }) => theme.fontSizes.lg};
+  }
 `;
 
 const MetricSubtext = styled.div`
@@ -471,8 +505,8 @@ const SitemapResult: React.FC<SitemapResultProps> = ({
       <SitemapContent>{sitemapXml}</SitemapContent>
       
       <ButtonGroup>
-        <Button onClick={onDownload}>Download Sitemap</Button>
-        <Button variant="outline" onClick={onRetry}>Generate New Sitemap</Button>
+        <Button onClick={onDownload} fullWidth={window.innerWidth <= 640}>Download Sitemap</Button>
+        <Button variant="outline" onClick={onRetry} fullWidth={window.innerWidth <= 640}>Generate New Sitemap</Button>
       </ButtonGroup>
     </ResultContainer>
   );

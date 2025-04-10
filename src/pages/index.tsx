@@ -74,7 +74,7 @@ const GeneratorContainer = styled.div`
 `;
 
 const PageTitle = styled.h1`
-  text-align: center;
+  text-align: left;
   margin-bottom: ${({ theme }) => theme.spacing[3]};
   color: ${({ theme }) => theme.colors.gray[900]};
   font-size: ${({ theme }) => theme.fontSizes['3xl']};
@@ -82,15 +82,23 @@ const PageTitle = styled.h1`
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    font-size: ${({ theme }) => theme.fontSizes['2xl']};
+  }
 `;
 
 const PageDescription = styled.p`
-  text-align: center;
+  text-align: left;
   max-width: 600px;
-  margin: 0 auto ${({ theme }) => theme.spacing[8]};
+  margin: 0 0 ${({ theme }) => theme.spacing[8]};
   color: ${({ theme }) => theme.colors.gray[600]};
   font-size: ${({ theme }) => theme.fontSizes.md};
   line-height: ${({ theme }) => theme.lineHeights.normal};
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    font-size: ${({ theme }) => theme.fontSizes.sm};
+  }
 `;
 
 const StepContainer = styled.div`

@@ -1,10 +1,9 @@
 import React, { ReactNode, useState } from 'react';
 import styled from 'styled-components';
-import { FiMaximize2, FiMinimize2, FiX, FiMove, FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { FiChevronDown, FiChevronUp, FiX, FiMove } from 'react-icons/fi';
 
 interface CardContainerProps {
   $isCompact: boolean;
-  $isExpanded: boolean;
   $isDragging?: boolean;
 }
 
@@ -19,14 +18,6 @@ const CardContainer = styled.div<CardContainerProps>`
   position: relative;
   transform: ${({ $isDragging }) => $isDragging ? 'scale(1.02)' : 'scale(1)'};
   width: 100%;
-  ${({ $isExpanded }) => $isExpanded ? `
-    position: fixed;
-    top: 5%;
-    left: 5%;
-    width: 90%;
-    height: 90%;
-    z-index: 1050;
-  ` : ''}
   
   &:hover {
     box-shadow: ${({ theme }) => theme.shadows.lg};
@@ -77,16 +68,15 @@ const IconButton = styled.button`
 
 interface CardContentProps {
   $isCompact: boolean;
-  $isExpanded: boolean;
   $isContentVisible: boolean;
 }
 
 const CardContent = styled.div<CardContentProps>`
   padding: ${({ theme, $isCompact }) => 
     $isCompact ? theme.spacing[2] : theme.spacing[4]};
-  overflow-y: ${({ $isExpanded }) => $isExpanded ? 'auto' : 'hidden'};
-  max-height: ${({ $isContentVisible, $isExpanded }) => 
-    !$isContentVisible ? '0' : $isExpanded ? 'calc(90vh - 120px)' : '500px'};
+  overflow-y: auto;
+  max-height: ${({ $isContentVisible }) => 
+    !$isContentVisible ? '0' : '500px'};
   opacity: ${({ $isContentVisible }) => $isContentVisible ? 1 : 0};
   transition: all ${({ theme }) => theme.transition.normal};
 `;
@@ -102,17 +92,6 @@ const MoveHandle = styled.div`
   &:hover {
     color: ${({ theme }) => theme.colors.gray[600]};
   }
-`;
-
-const Backdrop = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 1040;
-  animation: ${({ theme }) => theme.animation.fadeIn};
 `;
 
 export interface CardProps {
@@ -133,7 +112,6 @@ const Card: React.FC<CardProps> = ({
   className,
 }) => {
   const [isCompact, setIsCompact] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isContentVisible, setIsContentVisible] = useState(true);
   
@@ -162,77 +140,48 @@ const Card: React.FC<CardProps> = ({
     setIsDragging(false);
   };
   
-  const toggleCompact = () => {
-    setIsCompact(!isCompact);
-  };
-  
-  const toggleExpand = () => {
-    setIsExpanded(!isExpanded);
-  };
-  
   const toggleContent = () => {
     setIsContentVisible(!isContentVisible);
   };
   
   return (
-    <>
-      {isExpanded && <Backdrop onClick={toggleExpand} />}
-      <CardContainer 
-        $isCompact={isCompact} 
-        $isExpanded={isExpanded}
-        $isDragging={isDragging}
-        className={className}
-        draggable={draggable}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        <CardHeader $isDraggable={draggable}>
-          {draggable && (
-            <MoveHandle>
-              <FiMove size={16} />
-            </MoveHandle>
-          )}
-          
-          <CardTitle>{title}</CardTitle>
-          
-          <CardActions>
-            <IconButton onClick={toggleContent}>
-              {isContentVisible ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
-            </IconButton>
-            
-            <IconButton onClick={toggleCompact}>
-              {isCompact ? <FiMaximize2 size={16} /> : <FiMinimize2 size={16} />}
-            </IconButton>
-            
-            {!isExpanded && (
-              <IconButton onClick={toggleExpand}>
-                <FiMaximize2 size={16} />
-              </IconButton>
-            )}
-            
-            {isExpanded && (
-              <IconButton onClick={toggleExpand}>
-                <FiMinimize2 size={16} />
-              </IconButton>
-            )}
-            
-            {onClose && (
-              <IconButton onClick={onClose}>
-                <FiX size={16} />
-              </IconButton>
-            )}
-          </CardActions>
-        </CardHeader>
+    <CardContainer 
+      $isCompact={isCompact} 
+      $isDragging={isDragging}
+      className={className}
+      draggable={draggable}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <CardHeader $isDraggable={draggable}>
+        {draggable && (
+          <MoveHandle>
+            <FiMove size={16} />
+          </MoveHandle>
+        )}
         
-        <CardContent 
-          $isCompact={isCompact} 
-          $isExpanded={isExpanded}
-          $isContentVisible={isContentVisible}
-        >
-          {children}
-        </CardContent>
-      </CardContainer>
-    </>
+        <CardTitle>{title}</CardTitle>
+        
+        <CardActions>
+          <IconButton onClick={toggleContent}>
+            {isContentVisible ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
+          </IconButton>
+          
+          {onClose && (
+            <IconButton onClick={onClose}>
+              <FiX size={16} />
+            </IconButton>
+          )}
+        </CardActions>
+      </CardHeader>
+      
+      <CardContent 
+        $isCompact={isCompact} 
+        $isContentVisible={isContentVisible}
+      >
+        {children}
+      </CardContent>
+    </CardContainer>
   );
 };
 

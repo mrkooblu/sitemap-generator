@@ -22,19 +22,29 @@ const FormContainer = styled.div<{ $inactive?: boolean }>`
   }
   
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    padding: ${({ theme }) => theme.spacing[6]};
+    padding: ${({ theme }) => theme.spacing[4]};
+    margin: 1rem auto;
   }
 `;
 
 const FormHeader = styled.div`
   text-align: center;
   margin-bottom: ${({ theme }) => theme.spacing[8]};
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    margin-bottom: ${({ theme }) => theme.spacing[4]};
+  }
 `;
 
 const FormTitle = styled.h1`
   font-size: ${({ theme }) => theme.fontSizes['3xl']};
   color: ${({ theme }) => theme.colors.gray[900]};
   margin-bottom: ${({ theme }) => theme.spacing[2]};
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    font-size: ${({ theme }) => theme.fontSizes['2xl']};
+    margin-bottom: ${({ theme }) => theme.spacing[1]};
+  }
 `;
 
 const FormSubtitle = styled.p`
@@ -42,6 +52,12 @@ const FormSubtitle = styled.p`
   font-size: ${({ theme }) => theme.fontSizes.lg};
   max-width: 600px;
   margin: 0 auto;
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    font-size: ${({ theme }) => theme.fontSizes.md};
+    line-height: ${({ theme }) => theme.lineHeights.normal};
+    max-width: 100%;
+  }
 `;
 
 const InputGroup = styled.div`
@@ -111,25 +127,9 @@ const InputWrapper = styled.div`
   margin-top: ${({ theme }) => theme.spacing[1]};
 `;
 
-const InputIcon = styled.div`
-  position: absolute;
-  left: ${({ theme }) => theme.spacing[4]};
-  color: ${({ theme }) => theme.colors.gray[500]};
-  transition: color ${({ theme }) => theme.transition.fast};
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  height: 100%;
-  
-  svg {
-    width: 24px;
-    height: 24px;
-  }
-`;
-
 const Input = styled.input<{ $hasError?: boolean, $isValid?: boolean }>`
   width: 100%;
-  padding: ${({ theme }) => `${theme.spacing[5]} ${theme.spacing[4]} ${theme.spacing[5]} ${theme.spacing[10]}`};
+  padding: ${({ theme }) => `${theme.spacing[5]} ${theme.spacing[4]}`};
   font-size: ${({ theme }) => theme.fontSizes.lg};
   border: 2px solid ${({ theme, $hasError, $isValid }) => 
     $hasError ? theme.colors.danger : 
@@ -153,6 +153,11 @@ const Input = styled.input<{ $hasError?: boolean, $isValid?: boolean }>`
   
   &::placeholder {
     color: ${({ theme }) => theme.colors.gray[400]};
+  }
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    padding: ${({ theme }) => `${theme.spacing[3]} ${theme.spacing[3]}`};
+    font-size: ${({ theme }) => theme.fontSizes.md};
   }
 `;
 
@@ -202,6 +207,21 @@ const AdvancedOptionsToggle = styled.button<{ $isOpen: boolean }>`
   position: relative;
   overflow: hidden;
   
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    padding: ${({ theme }) => theme.spacing[3]};
+    margin: ${({ theme }) => theme.spacing[4]} 0;
+    font-size: ${({ theme }) => theme.fontSizes.sm};
+    
+    .options-preview {
+      font-size: ${({ theme }) => theme.fontSizes.xs};
+    }
+    
+    .settings-icon, .chevron-icon {
+      width: 18px;
+      height: 18px;
+    }
+  }
+
   &:hover {
     background-color: ${({ theme, $isOpen }) => $isOpen ? theme.colors.primaryLight : theme.colors.gray[100]};
     transform: translateY(-1px);
@@ -486,9 +506,6 @@ const SitemapForm: React.FC<SitemapFormProps> = ({ onSubmit, isLoading }) => {
           </InputLabel>
         </LabelContainer>
         <InputWrapper>
-          <InputIcon>
-            <FiGlobe />
-          </InputIcon>
           <Input
             id="website-url"
             type="text"

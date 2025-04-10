@@ -78,16 +78,30 @@ const getSizeStyles = (size: ButtonSize, theme: any) => {
       return `
         padding: ${theme.spacing[1]} ${theme.spacing[3]};
         font-size: ${theme.fontSizes.sm};
+        
+        @media (max-width: ${theme.breakpoints.sm}) {
+          padding: ${theme.spacing[1]} ${theme.spacing[2]};
+        }
       `;
     case 'md':
       return `
         padding: ${theme.spacing[2]} ${theme.spacing[4]};
         font-size: ${theme.fontSizes.md};
+        
+        @media (max-width: ${theme.breakpoints.sm}) {
+          padding: ${theme.spacing[2]} ${theme.spacing[3]};
+          font-size: ${theme.fontSizes.sm};
+        }
       `;
     case 'lg':
       return `
         padding: ${theme.spacing[3]} ${theme.spacing[6]};
         font-size: ${theme.fontSizes.lg};
+        
+        @media (max-width: ${theme.breakpoints.sm}) {
+          padding: ${theme.spacing[2]} ${theme.spacing[4]};
+          font-size: ${theme.fontSizes.md};
+        }
       `;
     default:
       return '';
@@ -142,6 +156,10 @@ const StyledButton = styled.button<StyledButtonProps>`
   &:hover::after {
     left: 100%;
   }
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    border-radius: ${({ theme }) => theme.borderRadius.sm};
+  }
 `;
 
 const LoadingSpinner = styled.span`
@@ -165,6 +183,11 @@ const ButtonContent = styled.span<{ $isLoading?: boolean }>`
   
   svg {
     margin-right: 6px;
+    
+    @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+      margin-right: 4px;
+      transform: scale(0.9);
+    }
   }
 `;
 
