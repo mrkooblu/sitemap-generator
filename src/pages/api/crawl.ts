@@ -117,7 +117,11 @@ async function handleGetRequest(req: NextApiRequest, res: NextApiResponse) {
   const crawlerSession = global.crawlers.get(sessionId);
   
   if (!crawlerSession) {
-    return res.status(404).json({ error: 'Crawling session not found' });
+    return res.status(404).json({ 
+      error: 'Crawling session not found',
+      message: 'Your crawling session has expired or was lost. This can happen due to server restarts or memory limitations. Please start a new crawl.',
+      code: 'SESSION_EXPIRED'
+    });
   }
   
   // If complete, return the result
