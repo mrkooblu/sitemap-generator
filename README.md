@@ -2,7 +2,7 @@
 
 A powerful web-based tool to generate XML sitemaps for websites to improve SEO and search engine indexing.
 
-![Sitemap Generator Screenshot](./screenshot.png)
+![Sitemap Generator Screenshot](./public/images/screenshot.png)
 
 ## Features
 
