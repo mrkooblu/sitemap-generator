@@ -41,6 +41,57 @@ function formatXml(xml: string): string {
 }
 
 /**
+ * Normalize a URL to remove fragments and standardize format
+ */
+function normalizeUrl(url: string): string {
+  try {
+    // Fix common URL formatting issues
+    let cleanUrl = url.trim();
+    
+    // Fix malformed URLs like "lockhttps://"
+    if (cleanUrl.startsWith('lock') && cleanUrl.includes('http')) {
+      cleanUrl = cleanUrl.replace('lock', '');
+    }
+    
+    // Make sure URL has proper protocol
+    if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+      cleanUrl = 'https://' + cleanUrl;
+    }
+    
+    const urlObj = new URL(cleanUrl);
+    
+    // Lowercase the hostname
+    urlObj.hostname = urlObj.hostname.toLowerCase();
+    
+    // Remove all query parameters
+    urlObj.search = '';
+    
+    // Remove fragments
+    urlObj.hash = '';
+    
+    // Normalize the path
+    let path = urlObj.pathname;
+    
+    // Ensure path ends with trailing slash for consistency 
+    // (except for paths with file extensions)
+    const hasFileExtension = /\.[a-zA-Z0-9]{2,4}$/.test(path);
+    
+    if (!hasFileExtension) {
+      if (!path.endsWith('/')) {
+        path = path + '/';
+      }
+    }
+    
+    urlObj.pathname = path;
+    
+    return urlObj.toString();
+  } catch (error) {
+    console.error(`Error normalizing URL ${url}:`, error);
+    return url;
+  }
+}
+
+/**
  * Generates an XML sitemap from crawled page data
  */
 export async function generateSitemap(
@@ -53,13 +104,54 @@ export async function generateSitemap(
       throw new Error('No pages provided for sitemap generation');
     }
 
-    // Create a sitemap stream
+    // Normalize and deduplicate URLs
+    const normalizedPages = new Map<string, PageData>();
+    
+    // First pass: normalize all URLs and group by normalized URL
+    pages.forEach(page => {
+      if (!page.url) return;
+      
+      const normalizedUrl = normalizeUrl(page.url);
+      
+      // Skip invalid URLs
+      if (!normalizedUrl || normalizedUrl === '' || normalizedUrl === 'https://') {
+        return;
+      }
+      
+      // If we already have this URL, keep the one with more data or most recent lastmod
+      if (normalizedPages.has(normalizedUrl)) {
+        const existingPage = normalizedPages.get(normalizedUrl)!;
+        
+        // If the current page has a more recent lastmod, use it instead
+        if (page.lastmod && (!existingPage.lastmod || new Date(page.lastmod) > new Date(existingPage.lastmod))) {
+          // Merge with existing images if needed
+          if (existingPage.images && existingPage.images.length > 0) {
+            page.images = [...(page.images || []), ...existingPage.images];
+          }
+          normalizedPages.set(normalizedUrl, { ...page, url: normalizedUrl });
+        } else {
+          // Keep existing page but add new images if available
+          if (page.images && page.images.length > 0) {
+            const mergedImages = [...(existingPage.images || []), ...page.images];
+            normalizedPages.set(normalizedUrl, { 
+              ...existingPage, 
+              images: mergedImages 
+            });
+          }
+        }
+      } else {
+        // New URL, add to map with normalized URL
+        normalizedPages.set(normalizedUrl, { ...page, url: normalizedUrl });
+      }
+    });
+    
+    // Create sitemap stream
     const sitemapStream = new SitemapStream({
       hostname: options.hostname,
     });
 
     // Create links for the sitemap
-    const links = pages.map((page) => {
+    const links = Array.from(normalizedPages.values()).map((page) => {
       // Initialize the link object
       const link: any = {
         url: page.url,
@@ -70,10 +162,23 @@ export async function generateSitemap(
 
       // Add images if included and available
       if (options.includeImages && page.images && page.images.length > 0) {
-        link.img = page.images.map((imageUrl) => ({
-          url: imageUrl,
-          // You could extract alt and title from the original HTML if needed
-        }));
+        // Filter out data URIs and SVG placeholders
+        const validImages = page.images.filter(imageUrl => 
+          typeof imageUrl === 'string' && 
+          !imageUrl.startsWith('data:') && 
+          !imageUrl.includes('svg+xml') &&
+          !imageUrl.includes('base64')
+        );
+        
+        // Deduplicate images
+        const uniqueImages = Array.from(new Set(validImages));
+        
+        if (uniqueImages.length > 0) {
+          link.img = uniqueImages.map((imageUrl) => ({
+            url: imageUrl,
+            // You could extract alt and title from the original HTML if needed
+          }));
+        }
       }
 
       return link;

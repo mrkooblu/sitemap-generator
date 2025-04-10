@@ -141,11 +141,44 @@ async function processBatch(
         $('img[src]').each((_, element) => {
           const src = $(element).attr('src');
           if (src) {
+            // Skip data URIs, SVG placeholders and base64 encoded images
+            if (src.startsWith('data:') || src.includes('svg') || src.includes('base64')) {
+              return;
+            }
+            
             try {
               const absoluteSrc = new URL(src, url).toString();
-              images.push(absoluteSrc);
+              
+              // Verify it's a valid image URL with common image extensions
+              const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff'];
+              const parsedUrl = new URL(absoluteSrc);
+              const pathLower = parsedUrl.pathname.toLowerCase();
+              
+              // Only add if it's a valid image URL or has an image extension
+              if (
+                !absoluteSrc.startsWith('data:') && 
+                !absoluteSrc.includes('svg+xml') &&
+                (imageExtensions.some(ext => pathLower.endsWith(ext)) || pathLower.includes('/image/') || pathLower.includes('/images/'))
+              ) {
+                images.push(absoluteSrc);
+              }
             } catch (error) {
               // Skip invalid image URLs
+            }
+          }
+          
+          // Also check for data-src attribute (common for lazy-loaded images)
+          const dataSrc = $(element).attr('data-src');
+          if (dataSrc && !dataSrc.startsWith('data:') && !dataSrc.includes('svg') && !dataSrc.includes('base64')) {
+            try {
+              const absoluteDataSrc = new URL(dataSrc, url).toString();
+              
+              // Add only if it's not already in the images array
+              if (!images.includes(absoluteDataSrc) && !absoluteDataSrc.startsWith('data:')) {
+                images.push(absoluteDataSrc);
+              }
+            } catch (error) {
+              // Skip invalid data-src URLs
             }
           }
         });
@@ -177,10 +210,21 @@ async function processBatch(
   const finalFilteredUrls = Array.from(newUrls).filter(url => {
     // Explicitly filter out email protection URLs one last time
     return !url.includes('/cdn-cgi/l/email-protection');
+  }).map(url => normalizeApiUrl(url)); // Normalize all URLs
+  
+  // Normalize all URLs in processed results
+  const normalizedProcessedUrls = processedUrls.map(pageData => {
+    if (pageData.url) {
+      return { 
+        ...pageData, 
+        url: normalizeApiUrl(pageData.url) 
+      };
+    }
+    return pageData;
   });
   
   return {
-    processedUrls,
+    processedUrls: normalizedProcessedUrls,
     newUrls: finalFilteredUrls
   };
 }
@@ -310,4 +354,60 @@ function getLastModified($: cheerio.CheerioAPI, headers: any): string | undefine
   
   // Default to current time
   return new Date().toISOString();
+}
+
+/**
+ * Normalize a URL to avoid duplicate crawling
+ * - Removes fragments completely
+ * - Removes query parameters
+ * - Normalizes trailing slashes
+ * - Lowercase hostname
+ * - Fixes malformed URLs
+ */
+function normalizeApiUrl(url: string): string {
+  try {
+    // Fix common URL formatting issues
+    let cleanUrl = url.trim();
+    
+    // Fix malformed URLs like "lockhttps://"
+    if (cleanUrl.startsWith('lock') && cleanUrl.includes('http')) {
+      cleanUrl = cleanUrl.replace('lock', '');
+    }
+    
+    // Make sure URL has proper protocol
+    if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+      cleanUrl = 'https://' + cleanUrl;
+    }
+    
+    const urlObj = new URL(cleanUrl);
+    
+    // Lowercase the hostname
+    urlObj.hostname = urlObj.hostname.toLowerCase();
+    
+    // Remove all query parameters
+    urlObj.search = '';
+    
+    // Remove fragments
+    urlObj.hash = '';
+    
+    // Normalize the path
+    let path = urlObj.pathname;
+    
+    // Ensure path ends with trailing slash for consistency 
+    // (except for paths with file extensions)
+    const hasFileExtension = /\.[a-zA-Z0-9]{2,4}$/.test(path);
+    
+    if (!hasFileExtension) {
+      if (!path.endsWith('/')) {
+        path = path + '/';
+      }
+    }
+    
+    urlObj.pathname = path;
+    
+    return urlObj.toString();
+  } catch (error) {
+    console.error(`Error normalizing URL ${url}:`, error);
+    return url;
+  }
 } 

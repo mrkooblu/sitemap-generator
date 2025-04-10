@@ -43,17 +43,36 @@ const STORAGE_KEY = 'crawlState';
  * Initialize a new crawl
  */
 export function initCrawl(rootUrl: string, options: Partial<CrawlerOptions> = {}): CrawlState {
-  // Merge with default options
-  const mergedOptions = { ...DEFAULT_OPTIONS, ...options } as CrawlerOptions;
+  // First normalize the root URL
+  const normalizedRootUrl = normalizeUrl(rootUrl);
+  
+  const defaultOptions: CrawlerOptions = {
+    maxDepth: 3,
+    includeImages: true,
+    excludeNoindex: true,
+    respectRobotsTxt: true,
+    changeFrequency: 'weekly',
+    priority: 0.7,
+    maxPages: 100,
+    crawlRate: 0, // No rate limiting for faster crawling
+    requestTimeout: 10000,
+    retryCount: 1
+  };
+  
+  // Merge options with defaults
+  const mergedOptions = {
+    ...defaultOptions,
+    ...options
+  };
   
   // Create initial state
   const state: CrawlState = {
-    rootUrl,
+    rootUrl: normalizedRootUrl,
     options: mergedOptions,
-    allUrls: [rootUrl],
+    allUrls: [normalizedRootUrl],
     processedUrls: {},
-    pendingUrls: [rootUrl],
-    discovered: { [rootUrl]: true },
+    pendingUrls: [normalizedRootUrl],
+    discovered: { [normalizedRootUrl]: true },
     currentDepth: 0,
     startTime: Date.now(),
     urlsCount: {
@@ -66,7 +85,7 @@ export function initCrawl(rootUrl: string, options: Partial<CrawlerOptions> = {}
     currentBatchUrls: []
   };
   
-  // Save state to localStorage
+  // Save initial state to storage
   saveState(state);
   
   return state;
@@ -173,15 +192,36 @@ export async function processNextBatch(state: CrawlState): Promise<CrawlState> {
     batchResults.forEach(result => {
       // Add processed URLs to state
       result.processedUrls.forEach(pageData => {
-        state.processedUrls[pageData.url] = pageData;
+        if (!pageData.url) return;
+        
+        // Normalize URL before adding to processed URLs
+        const normalizedUrl = normalizeUrl(pageData.url);
+        
+        // Update the URL in the page data
+        pageData.url = normalizedUrl;
+        
+        // Add to processed URLs
+        state.processedUrls[normalizedUrl] = pageData;
       });
       
       // Add new URLs to pending list if they haven't been discovered yet
       result.newUrls.forEach(url => {
-        if (!state.discovered[url]) {
-          state.discovered[url] = true;
-          state.allUrls.push(url);
-          state.pendingUrls.push(url);
+        // Skip malformed or empty URLs
+        if (!url || url === '') return;
+        
+        // Normalize the URL to avoid duplicates
+        const normalizedUrl = normalizeUrl(url);
+        
+        // Skip invalid URLs after normalization
+        if (!normalizedUrl || normalizedUrl === '' || normalizedUrl === 'https://') {
+          return;
+        }
+        
+        // Only add URLs we haven't seen before
+        if (!state.discovered[normalizedUrl]) {
+          state.discovered[normalizedUrl] = true;
+          state.allUrls.push(normalizedUrl);
+          state.pendingUrls.push(normalizedUrl);
           state.urlsCount.total++;
           state.urlsCount.pending++;
         }
@@ -358,4 +398,60 @@ export function getCrawlStats(state: CrawlState): {
     crawlTime,
     averageTimePerUrl: urlsProcessed > 0 ? crawlTime / urlsProcessed : 0
   };
+}
+
+/**
+ * Normalize a URL to avoid duplicate crawling
+ * - Removes fragments completely
+ * - Removes query parameters
+ * - Normalizes trailing slashes
+ * - Lowercase hostname
+ * - Fixes malformed URLs
+ */
+function normalizeUrl(url: string): string {
+  try {
+    // Fix common URL formatting issues
+    let cleanUrl = url.trim();
+    
+    // Fix malformed URLs like "lockhttps://"
+    if (cleanUrl.startsWith('lock') && cleanUrl.includes('http')) {
+      cleanUrl = cleanUrl.replace('lock', '');
+    }
+    
+    // Make sure URL has proper protocol
+    if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+      cleanUrl = 'https://' + cleanUrl;
+    }
+    
+    const urlObj = new URL(cleanUrl);
+    
+    // Lowercase the hostname
+    urlObj.hostname = urlObj.hostname.toLowerCase();
+    
+    // Remove all query parameters
+    urlObj.search = '';
+    
+    // Remove fragments
+    urlObj.hash = '';
+    
+    // Normalize the path
+    let path = urlObj.pathname;
+    
+    // Ensure path ends with trailing slash for consistency 
+    // (except for paths with file extensions)
+    const hasFileExtension = /\.[a-zA-Z0-9]{2,4}$/.test(path);
+    
+    if (!hasFileExtension) {
+      if (!path.endsWith('/')) {
+        path = path + '/';
+      }
+    }
+    
+    urlObj.pathname = path;
+    
+    return urlObj.toString();
+  } catch (error) {
+    console.error(`Error normalizing URL ${url}:`, error);
+    return url;
+  }
 } 
