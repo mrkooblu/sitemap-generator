@@ -87,38 +87,6 @@ const TooltipIcon = styled(FiInfo)`
   }
 `;
 
-const Tooltip = styled.div`
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: 270px;
-  background-color: ${({ theme }) => theme.colors.gray[900]};
-  color: white;
-  padding: ${({ theme }) => theme.spacing[3]};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  z-index: 10;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-10px);
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  margin-top: ${({ theme }) => theme.spacing[1]};
-  font-weight: ${({ theme }) => theme.fontWeights.normal};
-  line-height: 1.5;
-  pointer-events: none;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    bottom: 100%;
-    left: 16px;
-    border-width: 6px;
-    border-style: solid;
-    border-color: transparent transparent ${({ theme }) => theme.colors.gray[900]} transparent;
-  }
-`;
-
 const InputWrapper = styled.div`
   position: relative;
   display: flex;
@@ -371,6 +339,67 @@ const FormatIndicator = styled.div`
   
   span {
     margin-left: ${({ theme }) => theme.spacing[1]};
+  }
+`;
+
+const Tooltip = styled.div`
+  position: absolute;
+  background-color: ${({ theme }) => theme.colors.gray[900]};
+  color: white;
+  padding: ${({ theme }) => theme.spacing[3]};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  z-index: 10;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  margin-top: ${({ theme }) => theme.spacing[1]};
+  font-weight: ${({ theme }) => theme.fontWeights.normal};
+  line-height: 1.5;
+  pointer-events: none;
+  width: 270px;
+  
+  /* Position tooltip differently based on its parent container */
+  ${CheckboxGroup}:last-child &,
+  ${CheckboxGroup}:nth-last-child(2) & {
+    /* For the last two checkbox groups (robots.txt is the last one) */
+    top: auto;
+    bottom: calc(100% + 10px);
+    left: 0;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 16px;
+      border-width: 6px;
+      border-style: solid;
+      border-color: ${({ theme }) => theme.colors.gray[900]} transparent transparent transparent;
+    }
+  }
+  
+  /* Default positioning for other tooltips */
+  ${CheckboxGroup}:not(:last-child):not(:nth-last-child(2)) &,
+  ${LabelContainer} & {
+    top: 100%;
+    left: 0;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      bottom: 100%;
+      left: 16px;
+      border-width: 6px;
+      border-style: solid;
+      border-color: transparent transparent ${({ theme }) => theme.colors.gray[900]} transparent;
+    }
+  }
+  
+  /* Make tooltip visible on hover */
+  ${TooltipIcon}:hover + & {
+    opacity: 1;
+    visibility: visible;
   }
 `;
 
