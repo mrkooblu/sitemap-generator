@@ -443,6 +443,33 @@ export class Crawler {
         return false;
       }
       
+      // Exclude Cloudflare email protection URLs
+      if (pathname.includes('/cdn-cgi/l/email-protection')) {
+        return false;
+      }
+      
+      // Exclude other common paths that shouldn't be crawled
+      const excludedPathPatterns = [
+        '/wp-admin',
+        '/wp-login',
+        '/wp-json',
+        '/admin',
+        '/login',
+        '/logout',
+        '/cdn-cgi/',
+        '/wp-content/uploads',
+        '/search',  // Search result pages
+        '/tag/',    // Tag pages in most CMS
+        '/author/', // Author pages in WordPress
+        '/feed/',   // RSS feeds
+        '/comments/',
+        '/trackback/'
+      ];
+      
+      if (excludedPathPatterns.some(pattern => pathname.startsWith(pattern))) {
+        return false;
+      }
+      
       return true;
     } catch (error) {
       console.error(`Error checking URL ${url}:`, error);

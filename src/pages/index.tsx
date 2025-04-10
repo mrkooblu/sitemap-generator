@@ -223,28 +223,129 @@ const Home: React.FC = () => {
       const crawledData = getCrawlResults(state);
       const stats = getCrawlStats(state);
       
-      // Call the sitemap generation API
-      const sitemapResponse = await fetch('/api/generate-sitemap', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          urls: crawledData,
-          options: {
-            hostname: state.rootUrl,
-            ...state.options
+      // Set maximum URLs per chunk to avoid hitting body size limits
+      const MAX_URLS_PER_CHUNK = 200;
+      let sitemapXml = '';
+      
+      // If we have a lot of URLs, process them in chunks
+      if (crawledData.length > MAX_URLS_PER_CHUNK) {
+        // Process in chunks
+        setIsLoading(true);
+        
+        // First generate a base sitemap with just the first chunk to get the XML header
+        const firstChunk = crawledData.slice(0, MAX_URLS_PER_CHUNK);
+        const firstResponse = await fetch('/api/generate-sitemap', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            urls: firstChunk,
+            options: {
+              hostname: state.rootUrl,
+              ...state.options
+            }
+          }),
+        });
+        
+        if (!firstResponse.ok) {
+          throw new Error('Failed to generate first sitemap chunk');
+        }
+        
+        // Get the complete XML from the first chunk
+        const firstXml = await firstResponse.text();
+        
+        // Extract header and footer from first XML
+        const urlsetStartIndex = firstXml.indexOf('<urlset');
+        const urlsetEndIndex = firstXml.lastIndexOf('</urlset>');
+        
+        if (urlsetStartIndex === -1 || urlsetEndIndex === -1) {
+          throw new Error('Invalid XML format received');
+        }
+        
+        const xmlHeader = firstXml.substring(0, urlsetStartIndex);
+        const urlsetOpenTag = firstXml.substring(urlsetStartIndex, firstXml.indexOf('>', urlsetStartIndex) + 1);
+        const urlsetCloseTag = '</urlset>';
+        const xmlFooter = firstXml.substring(urlsetEndIndex + urlsetCloseTag.length);
+        
+        // Initialize the combined XML with header and urlset opening tag
+        sitemapXml = xmlHeader + urlsetOpenTag;
+        
+        // Extract all URL entries from the first chunk
+        const urlEntries = [];
+        let urlStartIndex = firstXml.indexOf('<url>');
+        while (urlStartIndex !== -1) {
+          const urlEndIndex = firstXml.indexOf('</url>', urlStartIndex) + '</url>'.length;
+          urlEntries.push(firstXml.substring(urlStartIndex, urlEndIndex));
+          urlStartIndex = firstXml.indexOf('<url>', urlEndIndex);
+        }
+        
+        // Add the URL entries from the first chunk
+        sitemapXml += urlEntries.join('');
+        
+        // Process remaining chunks
+        for (let i = MAX_URLS_PER_CHUNK; i < crawledData.length; i += MAX_URLS_PER_CHUNK) {
+          const chunk = crawledData.slice(i, i + MAX_URLS_PER_CHUNK);
+          const chunkResponse = await fetch('/api/generate-sitemap', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              urls: chunk,
+              options: {
+                hostname: state.rootUrl,
+                ...state.options
+              }
+            }),
+          });
+          
+          if (!chunkResponse.ok) {
+            throw new Error(`Failed to generate sitemap chunk ${i / MAX_URLS_PER_CHUNK + 1}`);
           }
-        }),
-      });
-      
-      if (!sitemapResponse.ok) {
-        const errorData = await sitemapResponse.json();
-        throw new Error(errorData.error || 'Failed to generate sitemap');
+          
+          // Get the XML from this chunk
+          const chunkXml = await chunkResponse.text();
+          
+          // Extract URL entries from this chunk
+          const chunkUrlEntries = [];
+          let chunkUrlStartIndex = chunkXml.indexOf('<url>');
+          while (chunkUrlStartIndex !== -1) {
+            const chunkUrlEndIndex = chunkXml.indexOf('</url>', chunkUrlStartIndex) + '</url>'.length;
+            chunkUrlEntries.push(chunkXml.substring(chunkUrlStartIndex, chunkUrlEndIndex));
+            chunkUrlStartIndex = chunkXml.indexOf('<url>', chunkUrlEndIndex);
+          }
+          
+          // Add the URL entries from this chunk
+          sitemapXml += chunkUrlEntries.join('');
+        }
+        
+        // Add the closing urlset tag and footer
+        sitemapXml += urlsetCloseTag + xmlFooter;
+      } else {
+        // For smaller sitemaps, just make a single API call
+        const sitemapResponse = await fetch('/api/generate-sitemap', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            urls: crawledData,
+            options: {
+              hostname: state.rootUrl,
+              ...state.options
+            }
+          }),
+        });
+        
+        if (!sitemapResponse.ok) {
+          const errorData = await sitemapResponse.json();
+          throw new Error(errorData.error || 'Failed to generate sitemap');
+        }
+        
+        // Get the XML
+        sitemapXml = await sitemapResponse.text();
       }
-      
-      // Get the XML
-      const sitemapXml = await sitemapResponse.text();
       
       // Set sitemap data
       setSitemapData({

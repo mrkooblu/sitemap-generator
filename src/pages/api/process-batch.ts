@@ -4,6 +4,17 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 
 /**
+ * Configure API route to allow larger request body size
+ */
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb', // Increase from default 1mb
+    },
+  },
+};
+
+/**
  * Process a batch of URLs API endpoint
  * This is optimized for serverless environments where each function call should complete quickly
  */
@@ -57,8 +68,11 @@ async function processBatch(
   const processedUrls: PageData[] = [];
   const newUrls: Set<string> = new Set();
   
+  // Pre-filter URLs to avoid processing ones that should be excluded
+  const filteredUrls = filterUrls(urls, baseUrl);
+  
   // Process each URL in the batch
-  const promises = urls.map(async (url) => {
+  const promises = filteredUrls.map(async (url) => {
     try {
       const response = await axios.get(url, {
         timeout: options.requestTimeout || 10000,
@@ -96,22 +110,30 @@ async function processBatch(
       }
       
       // Extract links
+      const extractedUrls: string[] = [];
       $('a[href]').each((_, element) => {
         const href = $(element).attr('href');
         if (!href) return;
         
+        // Skip Cloudflare email protection links immediately
+        if (href.includes('/cdn-cgi/l/email-protection')) {
+          return;
+        }
+        
         try {
           // Resolve relative URLs
           const absoluteUrl = new URL(href, url).toString();
-          
-          // Only include URLs from the same domain and not already found
-          if (shouldIncludeUrl(absoluteUrl, baseUrl)) {
-            newUrls.add(absoluteUrl);
-          }
+          extractedUrls.push(absoluteUrl);
         } catch (error) {
           // Skip invalid URLs
         }
       });
+      
+      // Filter extracted URLs before adding to newUrls set
+      const validUrls = filterUrls(extractedUrls, baseUrl);
+      for (const validUrl of validUrls) {
+        newUrls.add(validUrl);
+      }
       
       // Extract images if enabled
       const images: string[] = [];
@@ -151,10 +173,31 @@ async function processBatch(
   // Wait for all URLs to be processed
   await Promise.all(promises);
   
+  // Final filtering of new URLs before returning
+  const finalFilteredUrls = Array.from(newUrls).filter(url => {
+    // Explicitly filter out email protection URLs one last time
+    return !url.includes('/cdn-cgi/l/email-protection');
+  });
+  
   return {
     processedUrls,
-    newUrls: Array.from(newUrls)
+    newUrls: finalFilteredUrls
   };
+}
+
+/**
+ * Filter an array of URLs, removing those that shouldn't be included
+ */
+function filterUrls(urls: string[], baseUrl: string): string[] {
+  return urls.filter(url => {
+    // First do a simple string check before parsing URL
+    if (url.includes('/cdn-cgi/l/email-protection')) {
+      console.log(`Quick-filtering out Cloudflare email protection URL: ${url}`);
+      return false;
+    }
+    
+    return shouldIncludeUrl(url, baseUrl);
+  });
 }
 
 /**
@@ -167,6 +210,14 @@ function shouldIncludeUrl(url: string, baseUrl: string): boolean {
     
     // Same domain check
     if (urlObj.hostname !== baseUrlObj.hostname) {
+      return false;
+    }
+    
+    const path = urlObj.pathname.toLowerCase();
+    
+    // Explicitly check for Cloudflare email protection URLs first
+    if (path.includes('/cdn-cgi/l/email-protection')) {
+      console.log(`Filtering out Cloudflare email protection URL: ${url}`);
       return false;
     }
     
@@ -187,13 +238,35 @@ function shouldIncludeUrl(url: string, baseUrl: string): boolean {
       '.avi', '.mov', '.wmv', '.css', '.js', '.xml'
     ];
     
-    const path = urlObj.pathname.toLowerCase();
     if (nonHtmlExtensions.some(ext => path.endsWith(ext))) {
+      return false;
+    }
+    
+    // Skip common paths that shouldn't be crawled
+    const excludedPathPatterns = [
+      '/wp-admin',
+      '/wp-login',
+      '/wp-json',
+      '/admin',
+      '/login',
+      '/logout',
+      '/cdn-cgi/',
+      '/wp-content/uploads',
+      '/search',  // Search result pages
+      '/tag/',    // Tag pages in most CMS
+      '/author/', // Author pages in WordPress
+      '/feed/',   // RSS feeds
+      '/comments/',
+      '/trackback/'
+    ];
+    
+    if (excludedPathPatterns.some(pattern => path.startsWith(pattern))) {
       return false;
     }
     
     return true;
   } catch (error) {
+    console.error(`Error checking URL ${url}:`, error);
     return false;
   }
 }

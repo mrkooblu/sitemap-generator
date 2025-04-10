@@ -3,6 +3,17 @@ import { generateSitemap } from '../../utils/sitemap-generator';
 import { PageData } from '../../utils/crawler';
 
 /**
+ * Configure API route to allow larger request body size
+ */
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb', // Increase from default 1mb
+    },
+  },
+};
+
+/**
  * Generate sitemap API endpoint
  * Modified to work with client-coordinated approach
  */
