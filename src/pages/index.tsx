@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import Layout from '../components/Layout/Layout';
 import ProgressTracker from '../components/Progress/ProgressTracker';
@@ -11,6 +11,17 @@ import Accordion, { AccordionItem } from '../components/common/Accordion';
 import Tooltip from '../components/common/Tooltip';
 import Card from '../components/common/Card';
 import { FiBook, FiInfo, FiMap, FiSettings, FiFileText } from 'react-icons/fi';
+import {
+  initCrawl,
+  loadState,
+  clearState,
+  processNextBatch,
+  cancelCrawl,
+  getProgressInfo,
+  getCrawlResults,
+  getCrawlStats,
+  CrawlState
+} from '../utils/crawler-coordinator';
 
 // Page states
 enum AppState {
@@ -162,218 +173,132 @@ const Home: React.FC = () => {
   const [sitemapData, setSitemapData] = useState<SitemapData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('how-to');
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [crawlOptions, setCrawlOptions] = useState<any>(null);
+  const [crawlState, setCrawlState] = useState<CrawlState | null>(null);
   
   // Try to restore session on page load
   useEffect(() => {
-    const storedSessionId = localStorage.getItem('crawlSessionId');
-    const storedUrl = localStorage.getItem('crawlUrl');
-    const storedOptions = localStorage.getItem('crawlOptions');
-    const storedAppState = localStorage.getItem('appState');
-    
-    if (storedSessionId && storedUrl) {
-      setSessionId(storedSessionId);
-      setUrl(storedUrl);
+    const storedState = loadState();
+    if (storedState && !storedState.isComplete && !storedState.isCancelled) {
+      setCrawlState(storedState);
+      setUrl(storedState.rootUrl);
+      setAppState(AppState.PROGRESS);
       
-      if (storedOptions) {
-        try {
-          const options = JSON.parse(storedOptions);
-          setCrawlOptions(options);
-        } catch (e) {
-          console.error('Error parsing stored options', e);
-        }
-      }
-      
-      if (storedAppState === AppState.PROGRESS) {
-        setAppState(AppState.PROGRESS);
-        // Restart polling for this session
-        pollCrawlProgress(storedSessionId, storedUrl, storedOptions ? JSON.parse(storedOptions) : {});
-      }
+      // Start the polling loop
+      startPolling();
     }
   }, []);
   
-  // Function to poll crawl progress (extracted to be reusable)
-  const pollCrawlProgress = (sid: string, siteUrl: string, options: any) => {
-    const pollInterval = setInterval(async () => {
-      try {
-        const progressResponse = await fetch(`/api/crawl?sessionId=${sid}`, {
-          method: 'GET',
-        });
-        
-        if (!progressResponse.ok) {
-          clearInterval(pollInterval);
-          const errorData = await progressResponse.json();
-          
-          // Handle session expired error specifically
-          if (errorData.code === 'SESSION_EXPIRED') {
-            const restartCrawl = confirm(
-              'Your crawling session has expired or was lost. This can happen due to server restarts or memory limitations. Would you like to restart the crawl?'
-            );
-            
-            if (restartCrawl) {
-              // Restart the crawl with the same URL and options
-              generateSitemap(siteUrl, options);
-              return;
-            }
-          }
-          
-          throw new Error(errorData.error || 'Failed to get crawling progress');
-        }
-        
-        const progressData = await progressResponse.json();
-        
-        // Update progress state
-        if (progressData.progress) {
-          setProgress({
-            urlsScanned: progressData.progress.urlsScanned,
-            totalUrls: progressData.progress.totalUrls || 100,
-            timeElapsed: progressData.progress.timeElapsed,
-            estimatedTimeRemaining: progressData.progress.estimatedTimeRemaining,
-            currentUrl: progressData.progress.currentUrl,
-          });
-        }
-        
-        // Check if crawling is complete
-        if (progressData.isComplete) {
-          clearInterval(pollInterval);
-          
-          // Clear localStorage when complete
-          localStorage.removeItem('crawlSessionId');
-          localStorage.removeItem('crawlUrl');
-          localStorage.removeItem('crawlOptions');
-          localStorage.removeItem('appState');
-          
-          if (progressData.error) {
-            throw new Error(progressData.error);
-          }
-          
-          // Generate sitemap from crawl results
-          const crawlResult = progressData.result;
-          
-          // Call the sitemap generation API
-          const sitemapResponse = await fetch('/api/generate-sitemap', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              sessionId: sid,
-              options: {
-                hostname: siteUrl,
-                ...options
-              }
-            }),
-          });
-          
-          if (!sitemapResponse.ok) {
-            const errorData = await sitemapResponse.json();
-            throw new Error(errorData.error || 'Failed to generate sitemap');
-          }
-          
-          // Get the XML
-          const sitemapXml = await sitemapResponse.text();
-          
-          // Set sitemap data
-          setSitemapData({
-            url: siteUrl,
-            createdAt: new Date(),
-            urlsIndexed: crawlResult.urls.length,
-            sitemapXml,
-          });
-          
-          setAppState(AppState.RESULTS);
-        }
-      } catch (error) {
-        clearInterval(pollInterval);
-        console.error('Polling error:', error);
-        setIsLoading(false);
-        alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        setAppState(AppState.INPUT);
-        
-        // Clear localStorage on error
-        localStorage.removeItem('crawlSessionId');
-        localStorage.removeItem('crawlUrl');
-        localStorage.removeItem('crawlOptions');
-        localStorage.removeItem('appState');
-      }
-    }, 1000); // Poll every second
+  // Polling function to update progress and process batches
+  const startPolling = useCallback(async () => {
+    let state = loadState();
+    if (!state || state.isComplete || state.isCancelled) return;
     
-    // Return a cleanup function
-    return () => {
-      clearInterval(pollInterval);
-    };
-  };
+    // Update progress info
+    const progressInfo = getProgressInfo(state);
+    setProgress({
+      urlsScanned: progressInfo.urlsScanned,
+      totalUrls: progressInfo.totalUrls,
+      timeElapsed: progressInfo.timeElapsed,
+      estimatedTimeRemaining: progressInfo.estimatedTimeRemaining,
+      currentUrl: progressInfo.currentUrl,
+    });
+    
+    // Process next batch
+    state = await processNextBatch(state);
+    setCrawlState(state);
+    
+    // If complete, generate sitemap
+    if (state.isComplete) {
+      generateSitemapFromResults(state);
+    } else {
+      // Continue polling
+      setTimeout(startPolling, 500);
+    }
+  }, []);
   
-  // Update the generateSitemap function to use our API routes
-  const generateSitemap = async (siteUrl: string, options: any) => {
-    setIsLoading(true);
-    setUrl(siteUrl);
-    setAppState(AppState.PROGRESS);
-    setCrawlOptions(options);
-    
-    // Store the current app state in localStorage
-    localStorage.setItem('crawlUrl', siteUrl);
-    localStorage.setItem('crawlOptions', JSON.stringify(options));
-    localStorage.setItem('appState', AppState.PROGRESS);
-    
+  // Generate sitemap from crawl results
+  const generateSitemapFromResults = async (state: CrawlState) => {
     try {
-      // Start the crawling process
-      const startResponse = await fetch('/api/crawl', {
+      // Get all crawled URLs
+      const crawledData = getCrawlResults(state);
+      const stats = getCrawlStats(state);
+      
+      // Call the sitemap generation API
+      const sitemapResponse = await fetch('/api/generate-sitemap', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ url: siteUrl, options }),
+        body: JSON.stringify({
+          urls: crawledData,
+          options: {
+            hostname: state.rootUrl,
+            ...state.options
+          }
+        }),
       });
       
-      if (!startResponse.ok) {
-        const errorData = await startResponse.json();
-        throw new Error(errorData.error || 'Failed to start crawling');
+      if (!sitemapResponse.ok) {
+        const errorData = await sitemapResponse.json();
+        throw new Error(errorData.error || 'Failed to generate sitemap');
       }
       
-      const data = await startResponse.json();
-      const sid = data.sessionId;
-      setSessionId(sid);
+      // Get the XML
+      const sitemapXml = await sitemapResponse.text();
       
-      // Store sessionId in localStorage
-      localStorage.setItem('crawlSessionId', sid);
+      // Set sitemap data
+      setSitemapData({
+        url: state.rootUrl,
+        createdAt: new Date(),
+        urlsIndexed: crawledData.length,
+        sitemapXml,
+      });
       
-      // Start polling
-      return pollCrawlProgress(sid, siteUrl, options);
+      setAppState(AppState.RESULTS);
+      setIsLoading(false);
     } catch (error) {
       console.error('Sitemap generation error:', error);
       setIsLoading(false);
       alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setAppState(AppState.INPUT);
+    }
+  };
+  
+  // Generate a sitemap for a website
+  const generateSitemap = async (siteUrl: string, options: any) => {
+    setIsLoading(true);
+    setUrl(siteUrl);
+    setAppState(AppState.PROGRESS);
+    
+    try {
+      // Clear any existing state
+      clearState();
       
-      // Clear localStorage on error
-      localStorage.removeItem('crawlSessionId');
-      localStorage.removeItem('crawlUrl');
-      localStorage.removeItem('crawlOptions');
-      localStorage.removeItem('appState');
+      // Initialize new crawl
+      const state = initCrawl(siteUrl, options);
+      setCrawlState(state);
       
+      // Start the polling loop
+      startPolling();
+      
+      // Return cleanup function
+      return () => {
+        cancelCrawl();
+      };
+    } catch (error) {
+      console.error('Sitemap generation error:', error);
+      setIsLoading(false);
+      alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setAppState(AppState.INPUT);
       return () => {}; // Return empty cleanup function
     }
   };
   
   const handleCancel = () => {
+    cancelCrawl();
     setAppState(AppState.INPUT);
     setIsLoading(false);
-    
-    // Clean up any active session
-    if (sessionId) {
-      // Attempt to cancel the crawl on the server
-      fetch(`/api/crawl?sessionId=${sessionId}`, {
-        method: 'DELETE',
-      }).catch(console.error);
-      
-      // Clear localStorage
-      localStorage.removeItem('crawlSessionId');
-      localStorage.removeItem('crawlUrl');
-      localStorage.removeItem('crawlOptions');
-      localStorage.removeItem('appState');
-    }
+    clearState();
   };
   
   // Helper to format time as HH:MM:SS
@@ -412,6 +337,7 @@ const Home: React.FC = () => {
     setAppState(AppState.INPUT);
     setUrl('');
     setSitemapData(null);
+    clearState();
   };
   
   const handleSubmit = (submittedUrl: string, options: any) => {
