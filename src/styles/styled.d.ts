@@ -11,12 +11,14 @@ declare module 'styled-components' {
       '2xl': string;
       '3xl': string;
       '4xl': string;
+      '5xl': string;
     };
     fontWeights: {
       normal: number;
       medium: number;
       semibold: number;
       bold: number;
+      extrabold: number;
     };
     lineHeights: {
       tight: number;
@@ -63,6 +65,8 @@ declare module 'styled-components' {
       primaryLight: string;
       secondary: string;
       secondaryHover: string;
+      secondaryLight: string;
+      accent: string;
       success: string;
       danger: string;
       warning: string;
@@ -112,6 +116,7 @@ declare module 'styled-components' {
       subtle: string;
       primary: string;
       blue: string;
+      purple: string;
     };
   }
 } 

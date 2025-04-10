@@ -113,6 +113,7 @@ const theme = {
     subtle: 'linear-gradient(120deg, #F4F5F9 0%, #ffffff 100%)',
     primary: 'linear-gradient(120deg, #009F81 0%, #007C65 100%)',
     purple: 'linear-gradient(120deg, #5925AB 0%, #421984 100%)',
+    blue: 'linear-gradient(120deg, #008FF8 0%, #0057B7 100%)',
   }
 };
 
