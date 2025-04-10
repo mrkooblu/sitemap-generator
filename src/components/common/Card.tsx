@@ -9,7 +9,7 @@ interface CardContainerProps {
 
 const CardContainer = styled.div<CardContainerProps>`
   background-color: ${({ theme }) => theme.background.paper};
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
   box-shadow: ${({ theme, $isDragging }) => 
     $isDragging ? theme.shadows.xl : theme.shadows.md};
   transition: all ${({ theme }) => theme.transition.normal};
@@ -18,6 +18,7 @@ const CardContainer = styled.div<CardContainerProps>`
   position: relative;
   transform: ${({ $isDragging }) => $isDragging ? 'scale(1.02)' : 'scale(1)'};
   width: 100%;
+  border: 1px solid ${({ theme }) => theme.colors.gray[200]};
   
   &:hover {
     box-shadow: ${({ theme }) => theme.shadows.lg};
@@ -38,9 +39,10 @@ const CardHeader = styled.div<{ $isDraggable?: boolean }>`
 const CardTitle = styled.h3`
   margin: 0;
   font-size: ${({ theme }) => theme.fontSizes.lg};
-  font-weight: ${({ theme }) => theme.fontWeights.semibold};
+  font-weight: ${({ theme }) => theme.fontWeights.bold};
   color: ${({ theme }) => theme.colors.gray[900]};
   flex: 1;
+  font-family: 'Inter', sans-serif;
 `;
 
 const CardActions = styled.div`
@@ -57,12 +59,12 @@ const IconButton = styled.button`
   justify-content: center;
   padding: ${({ theme }) => theme.spacing[1]};
   border-radius: ${({ theme }) => theme.borderRadius.md};
-  color: ${({ theme }) => theme.colors.gray[600]};
+  color: ${({ theme }) => theme.colors.primary};
   transition: all ${({ theme }) => theme.transition.fast};
   
   &:hover {
-    background-color: ${({ theme }) => theme.colors.gray[200]};
-    color: ${({ theme }) => theme.colors.gray[900]};
+    background-color: ${({ theme }) => theme.colors.primaryLight};
+    color: ${({ theme }) => theme.colors.primaryHover};
   }
 `;
 
@@ -73,12 +75,15 @@ interface CardContentProps {
 
 const CardContent = styled.div<CardContentProps>`
   padding: ${({ theme, $isCompact }) => 
-    $isCompact ? theme.spacing[2] : theme.spacing[4]};
+    $isCompact ? theme.spacing[2] : theme.spacing[5]};
   overflow-y: auto;
   max-height: ${({ $isContentVisible }) => 
     !$isContentVisible ? '0' : '500px'};
   opacity: ${({ $isContentVisible }) => $isContentVisible ? 1 : 0};
   transition: all ${({ theme }) => theme.transition.normal};
+  line-height: ${({ theme }) => theme.lineHeights.loose};
+  color: ${({ theme }) => theme.text.secondary};
+  font-family: 'Inter', sans-serif;
 `;
 
 const MoveHandle = styled.div`
@@ -90,7 +95,7 @@ const MoveHandle = styled.div`
   color: ${({ theme }) => theme.colors.gray[400]};
   
   &:hover {
-    color: ${({ theme }) => theme.colors.gray[600]};
+    color: ${({ theme }) => theme.colors.primary};
   }
 `;
 

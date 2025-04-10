@@ -11,16 +11,23 @@ const TooltipContainer = styled.div<TooltipContainerProps>`
   position: absolute;
   background-color: ${({ theme }) => theme.colors.gray[800]};
   color: white;
-  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
+  padding: 0.5rem 0.75rem;
   border-radius: ${({ theme }) => theme.borderRadius.md};
   font-size: ${({ theme }) => theme.fontSizes.sm};
-  max-width: 250px;
+  max-width: 300px;
+  width: max-content;
   z-index: 1000;
-  box-shadow: ${({ theme }) => theme.shadows.md};
   opacity: ${({ $visible }) => ($visible ? 1 : 0)};
   visibility: ${({ $visible }) => ($visible ? 'visible' : 'hidden')};
   transition: opacity ${({ theme }) => theme.transition.normal}, 
               visibility ${({ theme }) => theme.transition.normal};
+  line-height: 1.4;
+  
+  @media (max-width: 768px) {
+    max-width: 250px;
+    font-size: 0.75rem;
+    padding: 0.4rem 0.6rem;
+  }
   
   ${({ $position }) => {
     switch ($position) {

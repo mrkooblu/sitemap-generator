@@ -67,6 +67,19 @@ const TabButton = styled.button<TabButtonProps>`
 
 const TabContent = styled.div`
   animation: ${({ theme }) => theme.animation.fadeIn};
+  padding-top: 1.5rem;
+  
+  h2 {
+    margin-top: 1.5rem;
+  }
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    padding-top: 1rem;
+    
+    h2 {
+      margin-top: 1rem;
+    }
+  }
 `;
 
 export interface TabItem {

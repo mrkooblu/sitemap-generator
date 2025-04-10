@@ -3,14 +3,13 @@ import styled from 'styled-components';
 import Layout from '../components/Layout/Layout';
 import ProgressTracker from '../components/Progress/ProgressTracker';
 import SitemapResult from '../components/Results/SitemapResult';
-import SitemapForm from '../components/Input/SitemapForm';
 import { normalizeUrl } from '../utils/url-validator';
 import TabInterface, { TabItem } from '../components/common/TabInterface';
 import StepWizard, { WizardStep } from '../components/common/StepWizard';
 import Accordion, { AccordionItem } from '../components/common/Accordion';
 import Tooltip from '../components/common/Tooltip';
 import Card from '../components/common/Card';
-import { FiBook, FiInfo, FiMap, FiSettings, FiFileText } from 'react-icons/fi';
+import { FiBook, FiInfo, FiMap, FiSettings, FiChevronDown, FiChevronUp, FiCheck, FiAlertCircle, FiFileText } from 'react-icons/fi';
 import {
   initCrawl,
   loadState,
@@ -22,6 +21,7 @@ import {
   getCrawlStats,
   CrawlState
 } from '../utils/crawler-coordinator';
+import Button from '../components/common/Button';
 
 // Page states
 enum AppState {
@@ -44,25 +44,164 @@ const HomeContainer = styled.div`
 
 const HeroSection = styled.div`
   width: 100%;
-  margin-bottom: ${({ theme }) => theme.spacing[8]};
-  padding-left: 1rem;
+  background: linear-gradient(135deg, #4a6cf7 0%, #2651e9 100%);
+  color: white;
+  padding: 0;
+  margin-bottom: 0;
+  box-shadow: ${({ theme }) => theme.shadows.lg};
+  position: relative;
+  left: 0;
+  right: 0;
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    padding: 0 0 4rem;
+  }
 `;
 
 const HeroTitle = styled.h1`
-  text-align: left;
-  font-size: 40px;
+  text-align: center;
+  font-size: 3rem;
   font-weight: ${({ theme }) => theme.fontWeights.bold};
-  color: ${({ theme }) => theme.colors.gray[900]};
+  color: white;
   margin-bottom: ${({ theme }) => theme.spacing[3]};
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    font-size: 2.5rem;
+    text-align: left;
+  }
 `;
 
 const HeroSubtitle = styled.p`
-  text-align: left;
-  font-size: 18px;
+  text-align: center;
+  font-size: 1.25rem;
   max-width: 800px;
-  margin-bottom: ${({ theme }) => theme.spacing[8]};
-  color: ${({ theme }) => theme.colors.gray[600]};
+  margin: 0 auto ${({ theme }) => theme.spacing[8]};
+  color: rgba(255, 255, 255, 0.9);
   line-height: ${({ theme }) => theme.lineHeights.normal};
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    font-size: 1.1rem;
+    margin-bottom: ${({ theme }) => theme.spacing[6]};
+    text-align: left;
+    margin-left: 0;
+    margin-right: 0;
+  }
+`;
+
+const HeroForm = styled.div`
+  max-width: 800px;
+  position: relative;
+  margin: 0 auto;
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+`;
+
+const HeroInput = styled.input`
+  width: 100%;
+  height: 65.19px;
+  padding: 0 ${({ theme }) => theme.spacing[4]};
+  font-size: ${({ theme }) => theme.fontSizes.lg};
+  border: none;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  transition: background-color 0.2s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  
+  &:focus {
+    outline: none;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  }
+  
+  &::placeholder {
+    color: ${({ theme }) => theme.colors.gray[400]};
+  }
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    height: 52px;
+    padding: 0 ${({ theme }) => theme.spacing[3]};
+    font-size: ${({ theme }) => theme.fontSizes.md};
+  }
+`;
+
+const HeroButton = styled(Button)`
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  height: calc(65.19px - 10px);
+  padding: 0 ${({ theme }) => theme.spacing[5]};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  background-color: ${({ theme }) => theme.colors.success};
+  color: white;
+  font-weight: ${({ theme }) => theme.fontWeights.semibold};
+  transition: background-color 0.2s ease;
+  transform: none !important;
+  box-shadow: none !important;
+  
+  &, &:hover, &:focus, &:active {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  
+  &:hover {
+    background-color: #0d904f;
+  }
+  
+  /* Override the shimmer effect */
+  &::after {
+    display: none !important;
+  }
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    position: relative;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 52px;
+    padding: 0 ${({ theme }) => theme.spacing[3]};
+    font-size: ${({ theme }) => theme.fontSizes.md};
+  }
+`;
+
+// Add a small help text component
+const FormHelp = styled.p`
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 0.75rem;
+  text-align: center;
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    text-align: left;
+    margin-top: 0;
+  }
+`;
+
+const AdvancedOptionsLink = styled.button`
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  margin: 1rem auto 0;
+  width: fit-content;
+  
+  &:hover {
+    text-decoration: underline;
+  }
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    justify-content: flex-start;
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
+  }
 `;
 
 const GeneratorContainer = styled.div`
@@ -75,6 +214,7 @@ const GeneratorContainer = styled.div`
 
 const PageTitle = styled.h1`
   text-align: left;
+  margin-top: 1.5rem;
   margin-bottom: ${({ theme }) => theme.spacing[3]};
   color: ${({ theme }) => theme.colors.gray[900]};
   font-size: ${({ theme }) => theme.fontSizes['3xl']};
@@ -85,6 +225,7 @@ const PageTitle = styled.h1`
   
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
     font-size: ${({ theme }) => theme.fontSizes['2xl']};
+    margin-top: 1.25rem;
   }
 `;
 
@@ -191,7 +332,41 @@ interface SitemapData {
   createdAt: Date;
   urlsIndexed: number;
   sitemapXml: string;
+  crawlTime: number;
 }
+
+const HeroContainer = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 4rem;
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    padding: 2.5rem 1rem 2.5rem;
+  }
+`;
+
+const FreeLabel = styled.div`
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  opacity: 0.9;
+  text-align: center;
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    text-align: left;
+  }
+`;
+
+const AdvancedOptionsGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    grid-template-columns: 1fr;
+  }
+`;
 
 const Home: React.FC = () => {
   const [appState, setAppState] = useState<AppState>(AppState.INPUT);
@@ -207,6 +382,17 @@ const Home: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('how-to');
   const [crawlState, setCrawlState] = useState<CrawlState | null>(null);
+  
+  // Add state for advanced options
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+  const [advancedOptions, setAdvancedOptions] = useState({
+    maxDepth: 5,
+    includeImages: true,
+    excludeNoindex: true,
+    respectRobotsTxt: true,
+    priority: 0.7,
+    maxPages: 2000,
+  });
   
   // Try to restore session on page load
   useEffect(() => {
@@ -383,9 +569,10 @@ const Home: React.FC = () => {
       // Set sitemap data
       setSitemapData({
         url: state.rootUrl,
-        createdAt: new Date(),
+        createdAt: new Date(state.startTime),
         urlsIndexed: crawledData.length,
         sitemapXml,
+        crawlTime: stats.crawlTime,
       });
       
       setAppState(AppState.RESULTS);
@@ -474,9 +661,27 @@ const Home: React.FC = () => {
     clearState();
   };
   
+  // Handle form submission from the hero banner
+  const handleHeroSubmit = () => {
+    if (!url.trim()) {
+      alert('Please enter a website URL');
+      return;
+    }
+    
+    const normalizedUrl = normalizeUrl(url);
+    generateSitemap(normalizedUrl, advancedOptions);
+  };
+  
+  // Keep the original handleSubmit for backward compatibility
   const handleSubmit = (submittedUrl: string, options: any) => {
+    // Update the URL in case this is called from another component
+    setUrl(submittedUrl);
+    
+    // Merge any passed options with our advanced options
+    const mergedOptions = { ...advancedOptions, ...options };
+    
     const normalizedUrl = normalizeUrl(submittedUrl);
-    generateSitemap(normalizedUrl, options);
+    generateSitemap(normalizedUrl, mergedOptions);
   };
   
   // Wizard steps for "How to Generate a Sitemap"
@@ -536,7 +741,7 @@ const Home: React.FC = () => {
       content: (
         <StepContainer>
           <StepTitle>
-            <FiFileText />
+            <FiBook />
             Step 3: Download your sitemap
           </StepTitle>
           <StepContent>
@@ -753,20 +958,280 @@ const Home: React.FC = () => {
   ];
   
   return (
-    <Layout>
-      <HomeContainer>
-        {/* Always show the header */}
+    <Layout
+      fullWidthTop={
         <HeroSection>
-          <HeroTitle>Sitemap Generator</HeroTitle>
-          <HeroSubtitle>
-            Create a professional XML sitemap that you can submit to search engines and use
-            to improve your overall SEO efforts.
-          </HeroSubtitle>
+          <HeroContainer>
+            {/* Small 'FREE' label similar to backlinko example */}
+            <FreeLabel>FREE</FreeLabel>
+            
+            <HeroTitle>Sitemap Generator</HeroTitle>
+            <HeroSubtitle>
+              Create a professional XML sitemap that you can submit to search engines and use
+              to improve your overall SEO efforts.
+            </HeroSubtitle>
+            
+            {/* Integrated form input */}
+            <HeroForm>
+              <HeroInput 
+                type="text" 
+                placeholder="Enter your website URL" 
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleHeroSubmit();
+                  }
+                }}
+              />
+              <HeroButton onClick={handleHeroSubmit} disabled={isLoading}>
+                GENERATE SITEMAP
+              </HeroButton>
+              
+              {/* Advanced options link */}
+              <AdvancedOptionsLink onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}>
+                <FiSettings size={14} />
+                Advanced Options
+                <div style={{ 
+                  background: 'rgba(255,255,255,0.2)', 
+                  padding: '0.1rem 0.5rem', 
+                  borderRadius: '10px', 
+                  fontSize: '0.8rem' 
+                }}>
+                  Depth: {advancedOptions.maxDepth}, URLs: {advancedOptions.maxPages}, Priority: {advancedOptions.priority.toFixed(1)}
+                </div>
+              </AdvancedOptionsLink>
+              
+              {/* Simple advanced options panel */}
+              {showAdvancedOptions && (
+                <div style={{ 
+                  marginTop: '1rem', 
+                  padding: '1.5rem',
+                  background: 'rgba(255, 255, 255, 0.95)',
+                  borderRadius: '0.5rem',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                  color: '#333'
+                }}>
+                  {/* First row: inputs */}
+                  <AdvancedOptionsGrid>
+                    <div>
+                      <label style={{ 
+                        display: 'block', 
+                        marginBottom: '0.5rem',
+                        fontWeight: 500
+                      }}>
+                        Maximum Crawl Depth
+                        <Tooltip content="Defines how many levels of links the crawler should follow from your homepage. Higher values may find more pages but take longer to complete.">
+                          <span style={{ marginLeft: '4px', color: '#6E7B85', cursor: 'help' }}>ⓘ</span>
+                        </Tooltip>
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="10"
+                        style={{ 
+                          width: '100%',
+                          padding: '0.75rem',
+                          borderRadius: '0.375rem',
+                          border: '1px solid #4CAF50',
+                          fontSize: '1rem'
+                        }}
+                        value={advancedOptions.maxDepth}
+                        onChange={(e) => setAdvancedOptions({
+                          ...advancedOptions,
+                          maxDepth: parseInt(e.target.value)
+                        })}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label style={{ 
+                        display: 'block', 
+                        marginBottom: '0.5rem',
+                        fontWeight: 500
+                      }}>
+                        Maximum URLs to Crawl
+                        <Tooltip content="Sets the maximum number of URLs to include in your sitemap. Increase this for larger sites, or decrease for quicker results.">
+                          <span style={{ marginLeft: '4px', color: '#6E7B85', cursor: 'help' }}>ⓘ</span>
+                        </Tooltip>
+                      </label>
+                      <input
+                        type="number"
+                        min="10"
+                        max="5000"
+                        step="10"
+                        style={{ 
+                          width: '100%',
+                          padding: '0.75rem',
+                          borderRadius: '0.375rem',
+                          border: '1px solid #4CAF50',
+                          fontSize: '1rem'
+                        }}
+                        value={advancedOptions.maxPages}
+                        onChange={(e) => setAdvancedOptions({
+                          ...advancedOptions,
+                          maxPages: parseInt(e.target.value)
+                        })}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label style={{ 
+                        display: 'block', 
+                        marginBottom: '0.5rem',
+                        fontWeight: 500
+                      }}>
+                        Page Priority
+                        <Tooltip content="Suggests the importance of pages to search engines (0.0 to 1.0). Higher values indicate higher importance. Default is 0.7.">
+                          <span style={{ marginLeft: '4px', color: '#6E7B85', cursor: 'help' }}>ⓘ</span>
+                        </Tooltip>
+                      </label>
+                      <input
+                        type="number"
+                        min="0.0"
+                        max="1.0"
+                        step="0.1"
+                        style={{ 
+                          width: '100%',
+                          padding: '0.75rem',
+                          borderRadius: '0.375rem',
+                          border: '1px solid #4CAF50',
+                          fontSize: '1rem'
+                        }}
+                        value={advancedOptions.priority}
+                        onChange={(e) => setAdvancedOptions({
+                          ...advancedOptions,
+                          priority: parseFloat(e.target.value)
+                        })}
+                      />
+                    </div>
+                  </AdvancedOptionsGrid>
+                  
+                  {/* Checkboxes */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div style={{ 
+                      padding: '1rem',
+                      border: '1px solid #EDF2F7',
+                      borderRadius: '0.375rem',
+                      backgroundColor: 'white'
+                    }}>
+                      <label style={{ display: 'flex', alignItems: 'center' }}>
+                        <div style={{ 
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: '24px',
+                          height: '24px',
+                          marginRight: '0.5rem',
+                          backgroundColor: advancedOptions.includeImages ? '#4F46E5' : 'transparent',
+                          borderRadius: '0.25rem',
+                          border: advancedOptions.includeImages ? 'none' : '1px solid #CBD5E0'
+                        }}>
+                          {advancedOptions.includeImages && (
+                            <span style={{ color: 'white', fontSize: '14px' }}>✓</span>
+                          )}
+                        </div>
+                        <input 
+                          type="checkbox" 
+                          checked={advancedOptions.includeImages}
+                          onChange={(e) => setAdvancedOptions({
+                            ...advancedOptions,
+                            includeImages: e.target.checked
+                          })}
+                          style={{ display: 'none' }}
+                        />
+                        <span>Include image information</span>
+                        <Tooltip content="Add information about images on your pages to the sitemap, which can help them appear in image search results.">
+                          <span style={{ marginLeft: '4px', color: '#6E7B85', cursor: 'help' }}>ⓘ</span>
+                        </Tooltip>
+                      </label>
+                    </div>
+                    
+                    <div style={{ 
+                      padding: '1rem',
+                      border: '1px solid #EDF2F7',
+                      borderRadius: '0.375rem',
+                      backgroundColor: 'white'
+                    }}>
+                      <label style={{ display: 'flex', alignItems: 'center' }}>
+                        <div style={{ 
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: '24px',
+                          height: '24px',
+                          marginRight: '0.5rem',
+                          backgroundColor: advancedOptions.excludeNoindex ? '#4F46E5' : 'transparent',
+                          borderRadius: '0.25rem',
+                          border: advancedOptions.excludeNoindex ? 'none' : '1px solid #CBD5E0'
+                        }}>
+                          {advancedOptions.excludeNoindex && (
+                            <span style={{ color: 'white', fontSize: '14px' }}>✓</span>
+                          )}
+                        </div>
+                        <input 
+                          type="checkbox" 
+                          checked={advancedOptions.excludeNoindex}
+                          onChange={(e) => setAdvancedOptions({
+                            ...advancedOptions,
+                            excludeNoindex: e.target.checked
+                          })}
+                          style={{ display: 'none' }}
+                        />
+                        <span>Exclude pages with noindex tag</span>
+                        <Tooltip content="Skip pages that have a 'noindex' meta tag, as these aren't meant to be indexed by search engines.">
+                          <span style={{ marginLeft: '4px', color: '#6E7B85', cursor: 'help' }}>ⓘ</span>
+                        </Tooltip>
+                      </label>
+                    </div>
+                    
+                    <div style={{ 
+                      padding: '1rem',
+                      border: '1px solid #EDF2F7',
+                      borderRadius: '0.375rem',
+                      backgroundColor: 'white'
+                    }}>
+                      <label style={{ display: 'flex', alignItems: 'center' }}>
+                        <div style={{ 
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: '24px',
+                          height: '24px',
+                          marginRight: '0.5rem',
+                          backgroundColor: advancedOptions.respectRobotsTxt ? '#4F46E5' : 'transparent',
+                          borderRadius: '0.25rem',
+                          border: advancedOptions.respectRobotsTxt ? 'none' : '1px solid #CBD5E0'
+                        }}>
+                          {advancedOptions.respectRobotsTxt && (
+                            <span style={{ color: 'white', fontSize: '14px' }}>✓</span>
+                          )}
+                        </div>
+                        <input 
+                          type="checkbox" 
+                          checked={advancedOptions.respectRobotsTxt}
+                          onChange={(e) => setAdvancedOptions({
+                            ...advancedOptions,
+                            respectRobotsTxt: e.target.checked
+                          })}
+                          style={{ display: 'none' }}
+                        />
+                        <span>Respect robots.txt rules</span>
+                        <Tooltip content="Follow the rules in your website's robots.txt file, which specifies which pages should not be crawled.">
+                          <span style={{ marginLeft: '4px', color: '#6E7B85', cursor: 'help' }}>ⓘ</span>
+                        </Tooltip>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </HeroForm>
+          </HeroContainer>
         </HeroSection>
-        
-        {/* Always show the input form */}
-        <SitemapForm onSubmit={handleSubmit} isLoading={isLoading} />
-        
+      }
+    >
+      <HomeContainer>
         {/* Show progress tracker when in PROGRESS state */}
         {appState === AppState.PROGRESS && (
           <ResultsContainer>
@@ -788,7 +1253,7 @@ const Home: React.FC = () => {
               urls={sitemapData.url.split(',')}
               sitemapXml={sitemapData.sitemapXml}
               totalUrls={sitemapData.urlsIndexed}
-              timeElapsed={formatTime(Math.floor((new Date().getTime() - sitemapData.createdAt.getTime()) / 1000))}
+              timeElapsed={formatTime(sitemapData.crawlTime)}
               onDownload={handleDownload}
               onRetry={handleNewSitemap}
             />

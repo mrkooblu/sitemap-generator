@@ -47,19 +47,6 @@ const StatusIndicator = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing[6]};
   font-size: ${({ theme }) => theme.fontSizes.md};
   color: ${({ theme }) => theme.colors.secondary};
-  animation: pulse 2s infinite;
-  
-  @keyframes pulse {
-    0% {
-      opacity: 0.6;
-    }
-    50% {
-      opacity: 1;
-    }
-    100% {
-      opacity: 0.6;
-    }
-  }
   
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
     font-size: ${({ theme }) => theme.fontSizes.sm};

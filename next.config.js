@@ -9,7 +9,6 @@ const nextConfig = {
   
   // Set the source directory and configure module support
   experimental: {
-    esmExternals: 'loose',
     externalDir: true,
   },
   

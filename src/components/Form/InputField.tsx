@@ -10,8 +10,9 @@ const Label = styled.label`
   display: block;
   font-weight: ${({ theme }) => theme.fontWeights.medium};
   margin-bottom: ${({ theme }) => theme.spacing[2]};
-  color: ${({ theme }) => theme.colors.gray[700]};
+  color: ${({ theme }) => theme.text.secondary};
   font-size: ${({ theme }) => theme.fontSizes.sm};
+  font-family: 'Inter', sans-serif;
 `;
 
 const RequiredStar = styled.span`
@@ -30,16 +31,18 @@ const InputWrapper = styled.div`
 
 const StyledInput = styled.input<StyledInputProps>`
   width: 100%;
-  padding: ${({ theme }) => theme.spacing[3]};
+  padding: ${({ theme }) => theme.spacing[3]} ${({ theme }) => theme.spacing[4]};
   border: 1px solid ${({ theme, $hasError }) => 
-    $hasError ? theme.colors.danger : theme.colors.gray[300]};
+    $hasError ? theme.colors.danger : theme.border.main};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   font-size: ${({ theme }) => theme.fontSizes.md};
   line-height: 1.5;
-  color: ${({ theme }) => theme.colors.gray[800]};
+  color: ${({ theme }) => theme.text.primary};
   background-color: ${({ theme }) => theme.colors.white};
   transition: all ${({ theme }) => theme.transition.fast};
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: ${({ theme }) => theme.shadows.sm};
+  font-family: 'Inter', sans-serif;
+  height: 48px;
   
   &::placeholder {
     color: ${({ theme }) => theme.colors.gray[400]};
@@ -47,7 +50,7 @@ const StyledInput = styled.input<StyledInputProps>`
   
   &:hover {
     border-color: ${({ theme, $hasError }) => 
-      $hasError ? theme.colors.danger : theme.colors.gray[400]};
+      $hasError ? theme.colors.danger : theme.colors.primary};
   }
   
   &:focus {
@@ -72,6 +75,7 @@ const HelpText = styled.p`
   color: ${({ theme }) => theme.colors.gray[500]};
   margin-top: ${({ theme }) => theme.spacing[1]};
   margin-bottom: 0;
+  font-family: 'Inter', sans-serif;
 `;
 
 const ErrorText = styled.p`
@@ -80,6 +84,7 @@ const ErrorText = styled.p`
   margin-top: ${({ theme }) => theme.spacing[1]};
   margin-bottom: 0;
   font-weight: ${({ theme }) => theme.fontWeights.medium};
+  font-family: 'Inter', sans-serif;
 `;
 
 interface InputFieldProps {

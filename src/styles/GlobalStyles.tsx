@@ -28,8 +28,8 @@ const GlobalStyles = createGlobalStyle`
   body {
     max-width: 100vw;
     overflow-x: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    line-height: 1.6;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    line-height: ${theme.lineHeights.normal};
     letter-spacing: -0.01em;
   }
 
@@ -60,33 +60,36 @@ const GlobalStyles = createGlobalStyle`
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-weight: ${theme.fontWeights.semibold};
+    font-weight: ${theme.fontWeights.bold};
     line-height: ${theme.lineHeights.tight};
     color: ${theme.colors.gray[900]};
     margin-bottom: 0.5em;
+    font-family: 'Inter', sans-serif;
   }
 
   h1 {
-    font-size: ${theme.fontSizes['4xl']};
+    font-size: ${theme.fontSizes['5xl']};
     font-weight: ${theme.fontWeights.bold};
-    letter-spacing: -0.025em;
+    letter-spacing: -0.02em;
   }
 
   h2 {
-    font-size: ${theme.fontSizes['3xl']};
+    font-size: ${theme.fontSizes['4xl']};
     letter-spacing: -0.02em;
   }
 
   h3 {
-    font-size: ${theme.fontSizes['2xl']};
+    font-size: ${theme.fontSizes['3xl']};
+    letter-spacing: -0.01em;
   }
 
   h4 {
-    font-size: ${theme.fontSizes.xl};
+    font-size: ${theme.fontSizes['2xl']};
+    letter-spacing: -0.01em;
   }
 
   h5 {
-    font-size: ${theme.fontSizes.lg};
+    font-size: ${theme.fontSizes.xl};
   }
 
   h6 {
@@ -95,11 +98,34 @@ const GlobalStyles = createGlobalStyle`
 
   p {
     margin-bottom: 1rem;
+    line-height: ${theme.lineHeights.loose};
   }
 
   input, textarea, select {
-    font-family: inherit;
+    font-family: 'Inter', sans-serif;
     font-size: ${theme.fontSizes.md};
+  }
+
+  .lead-text {
+    font-family: 'Poppins', sans-serif;
+    font-size: ${theme.fontSizes.xl};
+    line-height: ${theme.lineHeights.loose};
+  }
+
+  .decorative-quote {
+    font-family: 'Poppins', sans-serif;
+    font-weight: ${theme.fontWeights.medium};
+    font-size: ${theme.fontSizes['4xl']};
+    line-height: 1.3;
+  }
+
+  .decorative-caps {
+    font-family: 'Inter', sans-serif;
+    font-weight: ${theme.fontWeights.bold};
+    font-size: ${theme.fontSizes.xl};
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    line-height: ${theme.lineHeights.normal};
   }
 
   ul, ol {
@@ -115,6 +141,36 @@ const GlobalStyles = createGlobalStyle`
   ::selection {
     background-color: ${theme.colors.primaryLight};
     color: ${theme.colors.primary};
+  }
+
+  @media (max-width: ${theme.breakpoints.sm}) {
+    h1 {
+      font-size: ${theme.fontSizes['3xl']};
+    }
+
+    h2 {
+      font-size: ${theme.fontSizes['2xl']};
+    }
+
+    h3 {
+      font-size: ${theme.fontSizes.xl};
+    }
+
+    h4 {
+      font-size: ${theme.fontSizes.lg};
+    }
+
+    h5, h6 {
+      font-size: ${theme.fontSizes.md};
+    }
+
+    .lead-text {
+      font-size: ${theme.fontSizes.lg};
+    }
+
+    .decorative-quote {
+      font-size: ${theme.fontSizes['2xl']};
+    }
   }
 `;
 

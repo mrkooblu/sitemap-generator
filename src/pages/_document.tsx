@@ -37,6 +37,9 @@ class MyDocument extends Document {
           <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
           <meta httpEquiv="Pragma" content="no-cache" />
           <meta httpEquiv="Expires" content="0" />
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
         </Head>
         <body>
           <Main />

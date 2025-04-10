@@ -17,14 +17,14 @@ const getButtonStyles = (variant: ButtonVariant, theme: any) => {
   switch (variant) {
     case 'primary':
       return `
-        background: linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.primaryDark || theme.colors.primary + 'dd'});
+        background-color: ${theme.colors.primary};
         color: ${theme.colors.white};
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         font-weight: ${theme.fontWeights.semibold};
         
         &:hover:not(:disabled) {
-          background: linear-gradient(135deg, ${theme.colors.primaryHover}, ${theme.colors.primaryDark || theme.colors.primary + 'cc'});
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
+          background-color: ${theme.colors.primaryHover};
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
           transform: translateY(-2px);
         }
         
@@ -41,11 +41,13 @@ const getButtonStyles = (variant: ButtonVariant, theme: any) => {
         
         &:hover:not(:disabled) {
           background-color: ${theme.colors.secondaryHover};
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+          transform: translateY(-1px);
         }
         
         &:active:not(:disabled) {
           box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+          transform: translateY(0);
         }
       `;
     case 'outline':
@@ -56,6 +58,11 @@ const getButtonStyles = (variant: ButtonVariant, theme: any) => {
         
         &:hover:not(:disabled) {
           background-color: ${theme.colors.primaryLight};
+          transform: translateY(-1px);
+        }
+        
+        &:active:not(:disabled) {
+          transform: translateY(0);
         }
       `;
     case 'text':
@@ -76,31 +83,37 @@ const getSizeStyles = (size: ButtonSize, theme: any) => {
   switch (size) {
     case 'sm':
       return `
-        padding: ${theme.spacing[1]} ${theme.spacing[3]};
+        padding: ${theme.spacing[2]} ${theme.spacing[3]};
         font-size: ${theme.fontSizes.sm};
+        height: 40px;
         
         @media (max-width: ${theme.breakpoints.sm}) {
-          padding: ${theme.spacing[1]} ${theme.spacing[2]};
+          padding: ${theme.spacing[1]} ${theme.spacing[3]};
+          height: 36px;
         }
       `;
     case 'md':
       return `
-        padding: ${theme.spacing[2]} ${theme.spacing[4]};
+        padding: ${theme.spacing[3]} ${theme.spacing[5]};
         font-size: ${theme.fontSizes.md};
+        height: 48px;
         
         @media (max-width: ${theme.breakpoints.sm}) {
-          padding: ${theme.spacing[2]} ${theme.spacing[3]};
+          padding: ${theme.spacing[2]} ${theme.spacing[4]};
           font-size: ${theme.fontSizes.sm};
+          height: 40px;
         }
       `;
     case 'lg':
       return `
-        padding: ${theme.spacing[3]} ${theme.spacing[6]};
+        padding: ${theme.spacing[4]} ${theme.spacing[8]};
         font-size: ${theme.fontSizes.lg};
+        height: 56px;
         
         @media (max-width: ${theme.breakpoints.sm}) {
-          padding: ${theme.spacing[2]} ${theme.spacing[4]};
+          padding: ${theme.spacing[3]} ${theme.spacing[6]};
           font-size: ${theme.fontSizes.md};
+          height: 48px;
         }
       `;
     default:
@@ -109,8 +122,8 @@ const getSizeStyles = (size: ButtonSize, theme: any) => {
 };
 
 const StyledButton = styled.button<StyledButtonProps>`
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  font-weight: ${({ theme }) => theme.fontWeights.medium};
+  border-radius: ${({ theme }) => theme.borderRadius.md}; /* 6px */
+  font-weight: ${({ theme }) => theme.fontWeights.semibold};
   cursor: pointer;
   transition: all ${({ theme }) => theme.transition.fast};
   border: none;
@@ -120,8 +133,7 @@ const StyledButton = styled.button<StyledButtonProps>`
   width: ${({ $fullWidth }) => ($fullWidth ? '100%' : 'auto')};
   position: relative;
   overflow: hidden;
-  letter-spacing: 0.02em;
-  text-transform: ${({ $variant }) => $variant === 'primary' ? 'uppercase' : 'none'};
+  font-family: 'Inter', sans-serif;
   
   ${({ $variant, theme }) => getButtonStyles($variant, theme)}
   ${({ $size, theme }) => getSizeStyles($size, theme)}
@@ -133,7 +145,7 @@ const StyledButton = styled.button<StyledButtonProps>`
   
   &:focus {
     outline: none;
-    box-shadow: 0 0 0 3px ${({ theme }) => theme.colors.primary}40, 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 0 3px ${({ theme }) => theme.colors.primary}30;
   }
   
   /* Add button shimmer effect */
@@ -182,11 +194,10 @@ const ButtonContent = styled.span<{ $isLoading?: boolean }>`
   justify-content: center;
   
   svg {
-    margin-right: 6px;
+    margin-right: 8px;
     
     @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-      margin-right: 4px;
-      transform: scale(0.9);
+      margin-right: 6px;
     }
   }
 `;

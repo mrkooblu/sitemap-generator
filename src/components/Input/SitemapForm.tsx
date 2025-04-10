@@ -251,7 +251,7 @@ const AdvancedOptionsContent = styled.div<{ $isOpen: boolean }>`
 
 const OptionsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: ${({ theme }) => theme.spacing[4]};
   margin-bottom: ${({ theme }) => theme.spacing[4]};
   
@@ -262,6 +262,7 @@ const OptionsGrid = styled.div`
   
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
     grid-template-columns: 1fr;
+    gap: ${({ theme }) => theme.spacing[3]};
   }
 `;
 
@@ -428,6 +429,7 @@ const SitemapForm: React.FC<SitemapFormProps> = ({ onSubmit, isLoading }) => {
     respectRobotsTxt: true,
     changeFrequency: 'weekly',
     priority: 0.7,
+    maxPages: 2000,
   });
   
   // Auto-focus the input field on component mount
@@ -575,7 +577,7 @@ const SitemapForm: React.FC<SitemapFormProps> = ({ onSubmit, isLoading }) => {
           
           {!showAdvancedOptions && (
             <div className="options-preview">
-              Depth: {options.maxDepth}, Images: {options.includeImages ? 'Yes' : 'No'}
+              Depth: {options.maxDepth}, URLs: {options.maxPages}, Images: {options.includeImages ? 'Yes' : 'No'}
               <FiChevronDown size={18} className="chevron-icon" style={{ marginLeft: '8px' }} />
             </div>
           )}
@@ -603,6 +605,29 @@ const SitemapForm: React.FC<SitemapFormProps> = ({ onSubmit, isLoading }) => {
                 min="1"
                 max="10"
                 value={options.maxDepth}
+                onChange={handleOptionChange}
+                $hasError={false}
+                $isValid={true}
+              />
+            </div>
+            
+            <div>
+              <OptionLabelContainer>
+                <InputLabel htmlFor="maxPages">Maximum URLs to Crawl</InputLabel>
+                <TooltipIcon />
+                <Tooltip>
+                  Sets the maximum number of URLs to include in your sitemap.
+                  Increase this value for larger sites, or decrease it for quicker results.
+                </Tooltip>
+              </OptionLabelContainer>
+              <Input
+                id="maxPages"
+                name="maxPages"
+                type="number"
+                min="10"
+                max="5000"
+                step="10"
+                value={options.maxPages}
                 onChange={handleOptionChange}
                 $hasError={false}
                 $isValid={true}

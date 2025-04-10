@@ -53,7 +53,7 @@ export function initCrawl(rootUrl: string, options: Partial<CrawlerOptions> = {}
     respectRobotsTxt: true,
     changeFrequency: 'weekly',
     priority: 0.7,
-    maxPages: 100,
+    maxPages: 2000,
     crawlRate: 0, // No rate limiting for faster crawling
     requestTimeout: 10000,
     retryCount: 1
@@ -389,7 +389,8 @@ export function getCrawlStats(state: CrawlState): {
   crawlTime: number;
   averageTimePerUrl: number;
 } {
-  const crawlTime = Math.floor((Date.now() - state.startTime) / 1000);
+  // Ensure crawlTime is at least 1 second to avoid divisions by zero
+  const crawlTime = Math.max(1, Math.floor((Date.now() - state.startTime) / 1000));
   const urlsProcessed = state.urlsCount.processed;
   
   return {
