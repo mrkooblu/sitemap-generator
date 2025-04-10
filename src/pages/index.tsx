@@ -152,6 +152,31 @@ const GraphicPlaceholder = styled.div`
   color: ${({ theme }) => theme.colors.gray[500]};
 `;
 
+const SectionSpacer = styled.div`
+  height: ${({ theme }) => theme.spacing[8]};
+`;
+
+const ResultsContainer = styled.div`
+  margin-top: ${({ theme }) => theme.spacing[8]};
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -${({ theme }) => theme.spacing[4]};
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    height: 1px;
+    background: linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0),
+      rgba(0, 0, 0, 0.1),
+      rgba(0, 0, 0, 0)
+    );
+  }
+`;
+
 // Placeholder for sitemap data
 interface SitemapData {
   url: string;
@@ -722,49 +747,54 @@ const Home: React.FC = () => {
   return (
     <Layout>
       <HomeContainer>
+        {/* Always show the header */}
+        <HeroSection>
+          <HeroTitle>Sitemap Generator</HeroTitle>
+          <HeroSubtitle>
+            Create a professional XML sitemap that you can submit to search engines and use
+            to improve your overall SEO efforts.
+          </HeroSubtitle>
+        </HeroSection>
+        
+        {/* Always show the input form */}
+        <SitemapForm onSubmit={handleSubmit} isLoading={isLoading} />
+        
+        {/* Show progress tracker when in PROGRESS state */}
         {appState === AppState.PROGRESS && (
-          <ProgressTracker
-            urlsScanned={progress.urlsScanned}
-            totalUrls={progress.totalUrls}
-            timeElapsed={progress.timeElapsed}
-            estimatedTimeRemaining={progress.estimatedTimeRemaining}
-            currentUrl={progress.currentUrl}
-            onCancel={handleCancel}
-          />
-        )}
-        
-        {appState === AppState.RESULTS && sitemapData && (
-          <SitemapResult
-            urls={sitemapData.url.split(',')}
-            sitemapXml={sitemapData.sitemapXml}
-            totalUrls={sitemapData.urlsIndexed}
-            timeElapsed={formatTime(Math.floor((new Date().getTime() - sitemapData.createdAt.getTime()) / 1000))}
-            onDownload={handleDownload}
-            onRetry={handleNewSitemap}
-          />
-        )}
-        
-        {appState === AppState.INPUT && (
-          <>
-            <HeroSection>
-              <HeroTitle>Sitemap Generator</HeroTitle>
-              <HeroSubtitle>
-                Create a professional XML sitemap that you can submit to search engines and use
-                to improve your overall SEO efforts.
-              </HeroSubtitle>
-            </HeroSection>
-            
-            <SitemapForm onSubmit={handleSubmit} isLoading={isLoading} />
-            
-            <Divider />
-            
-            <TabInterface
-              tabs={tabItems}
-              defaultActiveTab={activeTab}
-              onTabChange={setActiveTab}
+          <ResultsContainer>
+            <ProgressTracker
+              urlsScanned={progress.urlsScanned}
+              totalUrls={progress.totalUrls}
+              timeElapsed={progress.timeElapsed}
+              estimatedTimeRemaining={progress.estimatedTimeRemaining}
+              currentUrl={progress.currentUrl}
+              onCancel={handleCancel}
             />
-          </>
+          </ResultsContainer>
         )}
+        
+        {/* Show results when in RESULTS state */}
+        {appState === AppState.RESULTS && sitemapData && (
+          <ResultsContainer>
+            <SitemapResult
+              urls={sitemapData.url.split(',')}
+              sitemapXml={sitemapData.sitemapXml}
+              totalUrls={sitemapData.urlsIndexed}
+              timeElapsed={formatTime(Math.floor((new Date().getTime() - sitemapData.createdAt.getTime()) / 1000))}
+              onDownload={handleDownload}
+              onRetry={handleNewSitemap}
+            />
+          </ResultsContainer>
+        )}
+        
+        {/* Always show the tabs section */}
+        <Divider />
+        
+        <TabInterface
+          tabs={tabItems}
+          defaultActiveTab={activeTab}
+          onTabChange={setActiveTab}
+        />
       </HomeContainer>
     </Layout>
   );

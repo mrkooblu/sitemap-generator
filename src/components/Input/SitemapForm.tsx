@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import Button from '../common/Button';
 import { FiGlobe, FiSettings, FiChevronDown, FiChevronUp, FiCheck, FiAlertCircle, FiInfo } from 'react-icons/fi';
 
-const FormContainer = styled.div`
+const FormContainer = styled.div<{ $inactive?: boolean }>`
   background-color: ${({ theme }) => theme.background.paper};
   background-image: radial-gradient(${({ theme }) => theme.colors.gray[100]} 1px, transparent 1px);
   background-size: 20px 20px;
@@ -13,7 +13,8 @@ const FormContainer = styled.div`
   width: 100%;
   max-width: 1152px;
   margin: 2rem auto;
-  transition: box-shadow ${({ theme }) => theme.transition.normal}, transform 0.3s ease;
+  transition: box-shadow ${({ theme }) => theme.transition.normal}, transform 0.3s ease, opacity 0.3s ease;
+  opacity: ${({ $inactive }) => $inactive ? 0.7 : 1};
   
   &:hover {
     box-shadow: ${({ theme }) => theme.shadows.xl};
@@ -116,6 +117,9 @@ const InputIcon = styled.div`
   color: ${({ theme }) => theme.colors.gray[500]};
   transition: color ${({ theme }) => theme.transition.fast};
   z-index: 2;
+  display: flex;
+  align-items: center;
+  height: 100%;
   
   svg {
     width: 24px;
@@ -453,13 +457,24 @@ const SitemapForm: React.FC<SitemapFormProps> = ({ onSubmit, isLoading }) => {
     }
     
     if (validateUrl(formattedUrl)) {
+      // Prevent any potential form submission
+      e.stopPropagation();
+      
+      // Call the onSubmit callback directly
       onSubmit(formattedUrl, options);
+      
+      // Return false to prevent any default form action
+      return false;
     }
   };
   
   return (
-    <FormContainer>
-      <form onSubmit={handleSubmit}>
+    <FormContainer $inactive={isLoading}>
+      <form 
+        onSubmit={handleSubmit} 
+        target="_self" 
+        rel="noopener noreferrer"
+      >
         <LabelContainer>
           <InputLabel htmlFor="website-url">
             Enter your website URL
@@ -632,9 +647,15 @@ const SitemapForm: React.FC<SitemapFormProps> = ({ onSubmit, isLoading }) => {
         
         <FormActions>
           <Button 
-            type="submit" 
+            type="button" 
             loading={isLoading}
             size="lg"
+            onClick={(e) => {
+              e.preventDefault();
+              if (!isLoading) {
+                handleSubmit(new Event('submit') as any);
+              }
+            }}
           >
             GENERATE SITEMAP
           </Button>

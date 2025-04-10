@@ -26,6 +26,26 @@ const nextConfig = {
   async headers() {
     return [
       {
+        // Apply cache control headers to HTML pages
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=0, must-revalidate',
+          },
+        ],
+      },
+      {
+        // Apply cache control headers to static assets
+        source: '/static/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
         // Apply these headers to all routes
         source: '/api/:path*',
         headers: [
